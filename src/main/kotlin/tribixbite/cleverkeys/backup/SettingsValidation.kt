@@ -84,6 +84,11 @@ object SettingsValidation {
         // permission state. The voice pack itself is files, not prefs, and is not backed up.
         "voice_input_enabled",
         "voice_mic_permission_blocked",
+        // Gemini Voice STT (fork): API key must remain strictly local on-device and never be exported.
+        "voice_gemini_enabled",
+        "voice_gemini_api_key",
+        "voice_gemini_model",
+        "voice_gemini_prompt",
     )
 
     fun isInternalPreference(key: String): Boolean = key in INTERNAL_KEYS

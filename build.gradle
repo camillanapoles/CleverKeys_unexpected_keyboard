@@ -728,6 +728,7 @@ tasks.register('runPureTests', JavaExec) {
     'tribixbite.cleverkeys.stt.SttArchitectureDriftTest',
     'tribixbite.cleverkeys.stt.moonshine.MoonshineTokenizerTest',
     'tribixbite.cleverkeys.stt.moonshine.MoonshineV2StreamingEngineTest',
+    'tribixbite.cleverkeys.stt.gemini.GeminiSpeechEngineTest',
     // RTL (fa): directional arrows must be Icons.AutoMirrored.*.
     'tribixbite.cleverkeys.RtlMirroringDriftTest',
     // ARC-112 (2026-09-02): the swipe key-registration filter's pure core. Pins the

@@ -279,6 +279,10 @@ class SettingsActivity : ComponentActivity(), SharedPreferences.OnSharedPreferen
     internal var voiceImportStatus by mutableStateOf<tribixbite.cleverkeys.ui.settings.io.VoiceImportStatus?>(null)
     internal var installedVoicePacks by mutableStateOf(listOf<tribixbite.cleverkeys.stt.VoicePackManager.InstalledPack>())
     internal var unsupportedVoicePacks by mutableStateOf(listOf<tribixbite.cleverkeys.stt.VoicePackManager.InstalledPack>())
+    internal var voiceGeminiEnabled by mutableStateOf(false)
+    internal var voiceGeminiApiKey by mutableStateOf("")
+    internal var voiceGeminiModel by mutableStateOf(tribixbite.cleverkeys.stt.VoicePacks.DEFAULT_GEMINI_MODEL)
+    internal var voiceGeminiPrompt by mutableStateOf(tribixbite.cleverkeys.stt.VoicePacks.DEFAULT_GEMINI_PROMPT)
 
     // Custom URL-sanitization rules (Chunk 4). SAF-only, mime-restricted to JSON.
     internal val customRulesPickerLauncher = registerForActivityResult(

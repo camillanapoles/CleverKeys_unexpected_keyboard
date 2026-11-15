@@ -143,6 +143,10 @@ internal fun refreshVoiceInputState(activity: SettingsActivity) {
         // asks again on the next key press (MicPermissionGate KEY_PRESS), which is an opt-in moment.
         voiceInputEnabled = VoicePacks.isEnabled(prefs)
         voicePermissionBlocked = !granted && VoicePacks.isPermissionBlocked(prefs)
+        voiceGeminiEnabled = VoicePacks.isGeminiEnabled(prefs)
+        voiceGeminiApiKey = VoicePacks.getGeminiApiKey(prefs)
+        voiceGeminiModel = VoicePacks.getGeminiModel(prefs)
+        voiceGeminiPrompt = VoicePacks.getGeminiPrompt(prefs)
         lifecycleScope.launch {
             val (ok, unsupported) = withContext(Dispatchers.IO) {
                 val m = VoicePacks.manager(this@with)
@@ -151,6 +155,38 @@ internal fun refreshVoiceInputState(activity: SettingsActivity) {
             installedVoicePacks = ok
             unsupportedVoicePacks = unsupported
         }
+    }
+}
+
+internal fun onGeminiVoiceSwitchChanged(activity: SettingsActivity, enabled: Boolean) {
+    with(activity) {
+        voiceGeminiEnabled = enabled
+        val prefs = tribixbite.cleverkeys.DirectBootAwarePreferences.get_shared_preferences(this)
+        prefs.edit().putBoolean(VoicePacks.PREF_GEMINI_ENABLED, enabled).apply()
+    }
+}
+
+internal fun onGeminiApiKeyChanged(activity: SettingsActivity, apiKey: String) {
+    with(activity) {
+        voiceGeminiApiKey = apiKey
+        val prefs = tribixbite.cleverkeys.DirectBootAwarePreferences.get_shared_preferences(this)
+        prefs.edit().putString(VoicePacks.PREF_GEMINI_API_KEY, apiKey.trim()).apply()
+    }
+}
+
+internal fun onGeminiModelChanged(activity: SettingsActivity, model: String) {
+    with(activity) {
+        voiceGeminiModel = model
+        val prefs = tribixbite.cleverkeys.DirectBootAwarePreferences.get_shared_preferences(this)
+        prefs.edit().putString(VoicePacks.PREF_GEMINI_MODEL, model.trim()).apply()
+    }
+}
+
+internal fun onGeminiPromptChanged(activity: SettingsActivity, prompt: String) {
+    with(activity) {
+        voiceGeminiPrompt = prompt
+        val prefs = tribixbite.cleverkeys.DirectBootAwarePreferences.get_shared_preferences(this)
+        prefs.edit().putString(VoicePacks.PREF_GEMINI_PROMPT, prompt).apply()
     }
 }
 

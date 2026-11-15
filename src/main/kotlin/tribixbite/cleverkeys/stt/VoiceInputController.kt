@@ -250,8 +250,24 @@ class VoiceInputController(
         }
     }
 
-    /** Worker thread: load (or reuse) the engine for the active pack. */
+    /** Worker thread: load (or reuse) the engine for Gemini or the active voice pack. */
     private fun ensureEngine(language: String?) {
+        if (VoicePacks.isGeminiReady(host.prefs)) {
+            val key = VoicePacks.getGeminiApiKey(host.prefs)
+            val model = VoicePacks.getGeminiModel(host.prefs)
+            val prompt = VoicePacks.getGeminiPrompt(host.prefs)
+            val marker = File("gemini:$model:${key.hashCode()}:${prompt.hashCode()}")
+            if (engine != null && enginePack == marker) return
+            releaseEngine()
+            engine = tribixbite.cleverkeys.stt.gemini.GeminiSpeechEngine(
+                apiKey = key,
+                model = model,
+                prompt = prompt,
+            )
+            enginePack = marker
+            Log.i(TAG, "Voice engine ready: ${engine?.memoryReport()}")
+            return
+        }
         val pack = packs().activePack(language) ?: throw NoPackException()
         if (engine != null && enginePack == pack.dir) return
         releaseEngine()

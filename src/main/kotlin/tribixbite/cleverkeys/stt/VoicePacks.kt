@@ -59,11 +59,49 @@ object VoicePacks {
         false
     }
 
+    /** Opt-in Gemini Voice STT preferences (all device-local, never exported). */
+    const val PREF_GEMINI_ENABLED = "voice_gemini_enabled"
+    const val PREF_GEMINI_API_KEY = "voice_gemini_api_key"
+    const val PREF_GEMINI_MODEL = "voice_gemini_model"
+    const val PREF_GEMINI_PROMPT = "voice_gemini_prompt"
+    const val DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+    const val DEFAULT_GEMINI_PROMPT =
+        "Transcribe the spoken audio accurately with proper punctuation. Return only the transcribed text."
+
+    fun isGeminiEnabled(prefs: SharedPreferences): Boolean = try {
+        prefs.getBoolean(PREF_GEMINI_ENABLED, false)
+    } catch (e: ClassCastException) {
+        false
+    }
+
+    fun getGeminiApiKey(prefs: SharedPreferences): String = try {
+        prefs.getString(PREF_GEMINI_API_KEY, "")?.trim().orEmpty()
+    } catch (e: ClassCastException) {
+        ""
+    }
+
+    fun getGeminiModel(prefs: SharedPreferences): String = try {
+        prefs.getString(PREF_GEMINI_MODEL, DEFAULT_GEMINI_MODEL)?.trim().orEmpty()
+            .ifEmpty { DEFAULT_GEMINI_MODEL }
+    } catch (e: ClassCastException) {
+        DEFAULT_GEMINI_MODEL
+    }
+
+    fun getGeminiPrompt(prefs: SharedPreferences): String = try {
+        prefs.getString(PREF_GEMINI_PROMPT, DEFAULT_GEMINI_PROMPT)?.trim().orEmpty()
+            .ifEmpty { DEFAULT_GEMINI_PROMPT }
+    } catch (e: ClassCastException) {
+        DEFAULT_GEMINI_PROMPT
+    }
+
+    fun isGeminiReady(prefs: SharedPreferences): Boolean =
+        isGeminiEnabled(prefs) && getGeminiApiKey(prefs).isNotEmpty()
+
     /** The gate's facts for [context] right now. */
     fun facts(context: Context, prefs: SharedPreferences, fieldRefused: Boolean = false): MicPermissionGate.Facts =
         MicPermissionGate.Facts(
             voiceEnabled = isEnabled(prefs),
-            packInstalled = manager(context).installedPacks().isNotEmpty(),
+            packInstalled = isGeminiReady(prefs) || manager(context).installedPacks().isNotEmpty(),
             permissionGranted = hasMicPermission(context),
             permissionBlocked = isPermissionBlocked(prefs),
             fieldRefused = fieldRefused,

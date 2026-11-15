@@ -4,7 +4,9 @@
   <!-- Core keyboard permissions -->
   <uses-permission android:name="android.permission.VIBRATE"/>
 
-  <!-- PRIVACY: No INTERNET permission - CleverKeys is fully offline, no data leaves your device -->
+  <!-- Opt-in Gemini Voice STT (fork feature): used only when the user enables Gemini Voice
+       and provides their own local API key in Settings -> Voice input. -->
+  <uses-permission android:name="android.permission.INTERNET"/>
 
   <!-- On-device voice input (docs/specs/voice-input.md, maintainer decision 2026-10-29).
        Declared here because <uses-permission> is static, but RECORD_AUDIO is a runtime

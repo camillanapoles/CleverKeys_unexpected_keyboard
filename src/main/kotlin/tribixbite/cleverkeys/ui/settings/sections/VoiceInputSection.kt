@@ -21,6 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -34,6 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tribixbite.cleverkeys.R
@@ -42,6 +45,10 @@ import tribixbite.cleverkeys.stt.VoicePackManager
 import tribixbite.cleverkeys.ui.settings.CollapsibleSettingsSection
 import tribixbite.cleverkeys.ui.settings.SettingsSwitch
 import tribixbite.cleverkeys.ui.settings.io.VoiceImportStatus
+import tribixbite.cleverkeys.ui.settings.io.onGeminiApiKeyChanged
+import tribixbite.cleverkeys.ui.settings.io.onGeminiModelChanged
+import tribixbite.cleverkeys.ui.settings.io.onGeminiPromptChanged
+import tribixbite.cleverkeys.ui.settings.io.onGeminiVoiceSwitchChanged
 import tribixbite.cleverkeys.ui.settings.io.onVoiceSwitchChanged
 import tribixbite.cleverkeys.ui.settings.io.openMicAppSettings
 import tribixbite.cleverkeys.ui.settings.io.performVoicePackImport
@@ -93,6 +100,56 @@ internal fun SettingsActivity.VoiceInputSection() {
                 onClick = { openMicAppSettings(this@VoiceInputSection, toEnable = !voiceInputEnabled) },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.voice_open_app_settings)) }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        SettingsSwitch(
+            title = stringResource(R.string.voice_gemini_enable_title),
+            description = stringResource(R.string.voice_gemini_enable_desc),
+            checked = voiceGeminiEnabled,
+            onCheckedChange = { onGeminiVoiceSwitchChanged(this@VoiceInputSection, it) },
+        )
+
+        if (voiceGeminiEnabled) {
+            var showGeminiKey by remember { mutableStateOf(false) }
+            OutlinedTextField(
+                value = voiceGeminiApiKey,
+                onValueChange = { onGeminiApiKeyChanged(this@VoiceInputSection, it) },
+                label = { Text(stringResource(R.string.voice_gemini_api_key_label)) },
+                placeholder = { Text(stringResource(R.string.voice_gemini_api_key_hint)) },
+                singleLine = true,
+                visualTransformation = if (showGeminiKey) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    TextButton(onClick = { showGeminiKey = !showGeminiKey }) {
+                        Text(
+                            stringResource(if (showGeminiKey) R.string.voice_gemini_hide_key else R.string.voice_gemini_show_key),
+                            fontSize = 11.sp,
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            )
+            Text(
+                text = stringResource(R.string.voice_gemini_api_key_local_note),
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 6.dp),
+            )
+            OutlinedTextField(
+                value = voiceGeminiModel,
+                onValueChange = { onGeminiModelChanged(this@VoiceInputSection, it) },
+                label = { Text(stringResource(R.string.voice_gemini_model_label)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            )
+            OutlinedTextField(
+                value = voiceGeminiPrompt,
+                onValueChange = { onGeminiPromptChanged(this@VoiceInputSection, it) },
+                label = { Text(stringResource(R.string.voice_gemini_prompt_label)) },
+                maxLines = 3,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
