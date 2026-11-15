@@ -59,4 +59,60 @@ class GeminiSpeechEngineTest {
         assertThat(SettingsValidation.isInternalPreference("voice_gemini_model")).isTrue()
         assertThat(SettingsValidation.isInternalPreference("voice_gemini_prompt")).isTrue()
     }
+
+    @Test
+    fun isInteractionsModelDetectsTranscribeModels() {
+        assertThat(GeminiProtocol.isInteractionsModel("gemini-3.5-transcribe")).isTrue()
+        assertThat(GeminiProtocol.isInteractionsModel(" gemini-3.5-transcribe ")).isTrue()
+        assertThat(GeminiProtocol.isInteractionsModel("gemini-2.5-flash")).isFalse()
+    }
+
+    @Test
+    fun parseUploadedFileInfoExtractsNameUriAndState() {
+        val json = """
+            {
+              "file": {
+                "name": "files/abc123",
+                "uri": "https://generativelanguage.googleapis.com/v1beta/files/abc123",
+                "state": "ACTIVE"
+              }
+            }
+        """.trimIndent()
+        val info = GeminiProtocol.parseUploadedFileInfo(json)
+        assertThat(info.name).isEqualTo("files/abc123")
+        assertThat(info.uri).isEqualTo("https://generativelanguage.googleapis.com/v1beta/files/abc123")
+        assertThat(info.state).isEqualTo("ACTIVE")
+    }
+
+    @Test
+    fun buildInteractionBodyUsesSmartMultimodalMode() {
+        val body = GeminiProtocol.buildInteractionBody(
+            model = "gemini-3.5-transcribe",
+            fileUri = "https://generativelanguage.googleapis.com/v1beta/files/abc123",
+            smartMode = true,
+        )
+        assertThat(body).contains("\"model\":\"gemini-3.5-transcribe\"")
+        assertThat(body).contains("\"type\":\"audio\"")
+        assertThat(body).contains("\"uri\":\"https://generativelanguage.googleapis.com/v1beta/files/abc123\"")
+        assertThat(body).contains("\"mime_type\":\"audio/wav\"")
+        assertThat(body).contains("\"mode\":\"smart\"")
+    }
+
+    @Test
+    fun parseInteractionStatusExtractsModelOutputTextAndIgnoresThought() {
+        val json = """
+            {
+              "id": "int_123",
+              "status": "completed",
+              "outputs": [
+                {"type": "thought", "text": "internal thinking"},
+                {"type": "text", "text": "Olá mundo."}
+              ]
+            }
+        """.trimIndent()
+        val parsed = GeminiProtocol.parseInteractionStatus(json)
+        assertThat(parsed.id).isEqualTo("int_123")
+        assertThat(parsed.status).isEqualTo("completed")
+        assertThat(parsed.transcript).isEqualTo("Olá mundo.")
+    }
 }

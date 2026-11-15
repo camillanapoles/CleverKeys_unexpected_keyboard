@@ -73,4 +73,114 @@ object GeminiProtocol {
         }
         return sb.toString().trim()
     }
+
+    /**
+     * Returns true when [model] requires the Gemini Files + Interactions API
+     * (e.g. `gemini-3.5-transcribe` Multimodal mode) instead of `:generateContent`.
+     */
+    fun isInteractionsModel(model: String): Boolean {
+        val m = model.trim().lowercase()
+        return m.startsWith("gemini-3.5-transcribe") || m.endsWith("-transcribe")
+    }
+
+    data class UploadedFileInfo(
+        val name: String,
+        val uri: String,
+        val state: String,
+    )
+
+    /** Parses the response from Gemini Files API upload or file-status GET. */
+    fun parseUploadedFileInfo(responseJson: String): UploadedFileInfo {
+        val root = JSONObject(responseJson)
+        val fileObj = root.optJSONObject("file") ?: root
+        val name = fileObj.optString("name", "").trim()
+        val uri = fileObj.optString("uri", "").trim()
+        val state = fileObj.optString("state", root.optString("state", "")).trim().uppercase()
+        return UploadedFileInfo(name = name, uri = uri, state = state)
+    }
+
+    /**
+     * Builds the `/v1beta/interactions` JSON body for `gemini-3.5-transcribe`.
+     * Uses `transcription_config.mode = "smart"` for Multimodal mode by default.
+     */
+    fun buildInteractionBody(
+        model: String,
+        fileUri: String,
+        smartMode: Boolean = true,
+    ): String {
+        val inputItem = JSONObject()
+            .put("type", "audio")
+            .put("uri", fileUri)
+            .put("mime_type", "audio/wav")
+        val transcriptionConfig = JSONObject()
+            .put("mode", if (smartMode) "smart" else "verbatim")
+        val generationConfig = JSONObject()
+            .put("transcription_config", transcriptionConfig)
+        return JSONObject()
+            .put("model", model.trim().ifEmpty { "gemini-3.5-transcribe" })
+            .put("input", JSONArray().put(inputItem))
+            .put("generation_config", generationConfig)
+            .toString()
+    }
+
+    data class InteractionStatus(
+        val id: String,
+        val status: String,
+        val transcript: String,
+    )
+
+    /** Parses the `/v1beta/interactions` create/poll JSON response. */
+    fun parseInteractionStatus(responseJson: String): InteractionStatus {
+        val root = JSONObject(responseJson)
+        val id = root.optString("id", "").trim()
+        val status = root.optString("status", "").trim().lowercase()
+        val transcript = extractInteractionText(root)
+        return InteractionStatus(id = id, status = status, transcript = transcript)
+    }
+
+    /**
+     * Extracts model-produced transcript text from an Interactions API response,
+     * mirroring OpenLess's `extract_interaction_text` traversal (`output_text`,
+     * `outputs`, `steps`, `output` with `type in {"text", "model_output"}`).
+     */
+    fun extractInteractionText(root: JSONObject): String {
+        val direct = root.optString("output_text", "").trim()
+        if (direct.isNotEmpty()) return direct
+
+        for (key in listOf("outputs", "steps", "output")) {
+            val value = root.opt(key) ?: continue
+            val sb = StringBuilder()
+            collectInteractionText(value, sb)
+            val text = sb.toString().trim()
+            if (text.isNotEmpty()) return text
+        }
+        return ""
+    }
+
+    private fun collectInteractionText(value: Any?, sb: StringBuilder) {
+        when (value) {
+            is JSONArray -> {
+                for (i in 0 until value.length()) {
+                    collectInteractionText(value.opt(i), sb)
+                }
+            }
+            is JSONObject -> {
+                if (value.has("type")) {
+                    val kind = value.optString("type", "")
+                    if (kind != "text" && kind != "model_output") {
+                        return
+                    }
+                }
+                val text = value.optString("text", "")
+                if (text.isNotEmpty()) {
+                    sb.append(text)
+                } else if (value.has("content")) {
+                    collectInteractionText(value.opt("content"), sb)
+                }
+                if (!value.has("text") && value.has("output")) {
+                    collectInteractionText(value.opt("output"), sb)
+                }
+            }
+        }
+    }
 }

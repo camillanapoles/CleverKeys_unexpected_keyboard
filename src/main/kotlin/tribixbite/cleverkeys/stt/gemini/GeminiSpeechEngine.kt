@@ -67,11 +67,16 @@ class GeminiSpeechEngine(
                 return SpeechHypothesis("", 0, isFinal = true)
             }
             val wavBytes = GeminiProtocol.buildWavBytes(pcmBytes, sampleRate)
-            val base64Wav = Base64.encodeToString(wavBytes, Base64.NO_WRAP)
-            val requestBody = GeminiProtocol.buildRequestBody(base64Wav, prompt)
-            val responseJson = postGenerateContent(apiKey, model, requestBody)
+            val transcript = if (GeminiProtocol.isInteractionsModel(model)) {
+                transcribeViaInteractions(apiKey, model, wavBytes)
+            } else {
+                val base64Wav = Base64.encodeToString(wavBytes, Base64.NO_WRAP)
+                val requestBody = GeminiProtocol.buildRequestBody(base64Wav, prompt)
+                val responseJson = postGenerateContent(apiKey, model, requestBody)
+                if (isCancelled) return SpeechHypothesis("", 0, isFinal = true)
+                GeminiProtocol.parseGeminiTranscript(responseJson)
+            }
             if (isCancelled) return SpeechHypothesis("", 0, isFinal = true)
-            val transcript = GeminiProtocol.parseGeminiTranscript(responseJson)
             val words = SpeechHypothesis.splitWords(transcript)
             return SpeechHypothesis(transcript, words.size, isFinal = true)
         }
@@ -90,29 +95,179 @@ class GeminiSpeechEngine(
         private const val MIN_AUDIO_BYTES = 4_800
         private const val CONNECT_TIMEOUT_MS = 10_000
         private const val READ_TIMEOUT_MS = 30_000
+        private const val POLL_INTERVAL_MS = 500L
+        private const val MAX_POLL_ATTEMPTS = 120
 
         private fun postGenerateContent(apiKey: String, model: String, body: String): String {
             val safeModel = model.trim().ifEmpty { "gemini-2.5-flash" }
             val endpoint = URL("https://generativelanguage.googleapis.com/v1beta/models/$safeModel:generateContent")
-            val conn = (endpoint.openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
+            return executeRequest(
+                url = endpoint,
+                method = "POST",
+                headers = mapOf(
+                    "Content-Type" to "application/json; charset=UTF-8",
+                    "x-goog-api-key" to apiKey,
+                ),
+                body = body.toByteArray(Charsets.UTF_8),
+            ).body
+        }
+
+        private fun transcribeViaInteractions(apiKey: String, model: String, wavBytes: ByteArray): String {
+            val uploadUrl = startResumableUpload(apiKey, wavBytes.size)
+            val fileInfo = uploadAudioBytes(apiKey, uploadUrl, wavBytes)
+            if (fileInfo.uri.isEmpty() || fileInfo.name.isEmpty()) {
+                throw SpeechEngineException("Gemini Files API returned incomplete file metadata")
+            }
+            try {
+                waitForFileActive(apiKey, fileInfo)
+                val interactionBody = GeminiProtocol.buildInteractionBody(
+                    model = model,
+                    fileUri = fileInfo.uri,
+                    smartMode = true,
+                )
+                val createResp = executeRequest(
+                    url = URL("https://generativelanguage.googleapis.com/v1beta/interactions"),
+                    method = "POST",
+                    headers = mapOf(
+                        "Content-Type" to "application/json; charset=UTF-8",
+                        "x-goog-api-key" to apiKey,
+                    ),
+                    body = interactionBody.toByteArray(Charsets.UTF_8),
+                ).body
+                var status = GeminiProtocol.parseInteractionStatus(createResp)
+                var attempts = 0
+                while (status.status in INTERACTION_PENDING_STATES && attempts < MAX_POLL_ATTEMPTS) {
+                    if (status.id.isEmpty()) break
+                    Thread.sleep(POLL_INTERVAL_MS)
+                    attempts++
+                    val pollResp = executeRequest(
+                        url = URL("https://generativelanguage.googleapis.com/v1beta/interactions/${status.id}"),
+                        method = "GET",
+                        headers = mapOf("x-goog-api-key" to apiKey),
+                    ).body
+                    status = GeminiProtocol.parseInteractionStatus(pollResp)
+                }
+                if (status.status in INTERACTION_FAILED_STATES) {
+                    throw SpeechEngineException("Gemini interaction ${status.status}")
+                }
+                return status.transcript
+            } finally {
+                deleteFileBestEffort(apiKey, fileInfo.name)
+            }
+        }
+
+        private fun startResumableUpload(apiKey: String, contentLength: Int): String {
+            val resp = executeRequest(
+                url = URL("https://generativelanguage.googleapis.com/upload/v1beta/files"),
+                method = "POST",
+                headers = mapOf(
+                    "x-goog-api-key" to apiKey,
+                    "X-Goog-Upload-Protocol" to "resumable",
+                    "X-Goog-Upload-Command" to "start",
+                    "X-Goog-Upload-Header-Content-Length" to contentLength.toString(),
+                    "X-Goog-Upload-Header-Content-Type" to "audio/wav",
+                    "Content-Type" to "application/json; charset=UTF-8",
+                ),
+                body = """{"file":{"display_name":"cleverkeys-dictation.wav"}}""".toByteArray(Charsets.UTF_8),
+            )
+            return resp.uploadUrl
+                ?: throw SpeechEngineException("Missing upload URL from Gemini Files API")
+        }
+
+        private fun uploadAudioBytes(
+            apiKey: String,
+            uploadUrl: String,
+            wavBytes: ByteArray,
+        ): GeminiProtocol.UploadedFileInfo {
+            val resp = executeRequest(
+                url = URL(uploadUrl),
+                method = "POST",
+                headers = mapOf(
+                    "x-goog-api-key" to apiKey,
+                    "X-Goog-Upload-Offset" to "0",
+                    "X-Goog-Upload-Command" to "upload, finalize",
+                    "Content-Type" to "audio/wav",
+                ),
+                body = wavBytes,
+            )
+            return GeminiProtocol.parseUploadedFileInfo(resp.body)
+        }
+
+        private fun waitForFileActive(apiKey: String, initial: GeminiProtocol.UploadedFileInfo) {
+            var current = initial
+            var attempts = 0
+            while (current.state.isNotEmpty() && current.state != "ACTIVE" && attempts < MAX_POLL_ATTEMPTS) {
+                if (current.state == "FAILED") {
+                    throw SpeechEngineException("Gemini uploaded audio file processing failed")
+                }
+                Thread.sleep(POLL_INTERVAL_MS)
+                attempts++
+                val pollResp = executeRequest(
+                    url = URL("https://generativelanguage.googleapis.com/v1beta/${current.name}"),
+                    method = "GET",
+                    headers = mapOf("x-goog-api-key" to apiKey),
+                ).body
+                current = GeminiProtocol.parseUploadedFileInfo(pollResp)
+            }
+            if (current.state == "FAILED") {
+                throw SpeechEngineException("Gemini uploaded audio file processing failed")
+            }
+        }
+
+        private fun deleteFileBestEffort(apiKey: String, fileName: String) {
+            try {
+                val conn = (URL("https://generativelanguage.googleapis.com/v1beta/$fileName")
+                    .openConnection() as HttpURLConnection).apply {
+                    requestMethod = "DELETE"
+                    connectTimeout = CONNECT_TIMEOUT_MS
+                    readTimeout = READ_TIMEOUT_MS
+                    setRequestProperty("x-goog-api-key", apiKey)
+                }
+                try {
+                    conn.responseCode
+                } finally {
+                    conn.disconnect()
+                }
+            } catch (_: Exception) {
+                // Best-effort cleanup only
+            }
+        }
+
+        private data class HttpResponse(val body: String, val uploadUrl: String?)
+
+        private fun executeRequest(
+            url: URL,
+            method: String,
+            headers: Map<String, String>,
+            body: ByteArray? = null,
+        ): HttpResponse {
+            val conn = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = method
                 connectTimeout = CONNECT_TIMEOUT_MS
                 readTimeout = READ_TIMEOUT_MS
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-                setRequestProperty("x-goog-api-key", apiKey)
+                for ((k, v) in headers) {
+                    setRequestProperty(k, v)
+                }
+                if (body != null) {
+                    doOutput = true
+                }
             }
             return try {
-                conn.outputStream.use { os ->
-                    os.write(body.toByteArray(Charsets.UTF_8))
+                if (body != null) {
+                    conn.outputStream.use { os -> os.write(body) }
                 }
                 val code = conn.responseCode
                 val stream = if (code in 200..299) conn.inputStream else conn.errorStream
                 val text = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }.orEmpty()
                 if (code !in 200..299) {
-                    throw SpeechEngineException("Gemini API HTTP $code")
+                    val snippet = text.replace('\n', ' ').take(200)
+                    throw SpeechEngineException("Gemini API HTTP $code: $snippet")
                 }
-                text
+                val uploadUrl = conn.headerFields.entries
+                    .firstOrNull { it.key?.equals("x-goog-upload-url", ignoreCase = true) == true }
+                    ?.value
+                    ?.firstOrNull()
+                HttpResponse(body = text, uploadUrl = uploadUrl)
             } catch (e: SpeechEngineException) {
                 throw e
             } catch (e: Exception) {
@@ -121,5 +276,8 @@ class GeminiSpeechEngine(
                 conn.disconnect()
             }
         }
+
+        private val INTERACTION_PENDING_STATES = setOf("queued", "in_progress", "requires_action")
+        private val INTERACTION_FAILED_STATES = setOf("failed", "cancelled", "incomplete")
     }
 }
