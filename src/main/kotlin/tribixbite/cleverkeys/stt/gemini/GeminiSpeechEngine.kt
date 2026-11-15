@@ -79,6 +79,10 @@ class GeminiSpeechEngine(
         override fun cancel() {
             isCancelled = true
         }
+
+        override fun close() {
+            pcmOut.reset()
+        }
     }
 
     companion object {
