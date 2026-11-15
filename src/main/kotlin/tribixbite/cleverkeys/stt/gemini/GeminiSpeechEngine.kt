@@ -77,6 +77,7 @@ class GeminiSpeechEngine(
                 GeminiProtocol.parseGeminiTranscript(responseJson)
             }
             if (isCancelled) return SpeechHypothesis("", 0, isFinal = true)
+            android.util.Log.i("VoiceInput", "Gemini STT: model=$model, pcmBytes=${pcmBytes.size}, chars=${transcript.length}")
             val words = SpeechHypothesis.splitWords(transcript)
             return SpeechHypothesis(transcript, words.size, isFinal = true)
         }

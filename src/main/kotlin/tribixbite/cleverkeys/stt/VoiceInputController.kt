@@ -295,6 +295,9 @@ class VoiceInputController(
         enginePack = null
     }
 
+    @Volatile
+    private var activeSession: SpeechSession? = null
+
     private fun startStreaming() {
         val gen = generation
         val eng = engine ?: run {
@@ -303,9 +306,74 @@ class VoiceInputController(
         }
         host.showListening(loading = false, pendingText = "", onStop = ::onKeyPressed, onCancel = ::cancel)
         host.announce(text(R.string.voice_announce_listening))
-        val r = SegmentedRecognizer(eng).also { recognizer = it }
         val source = capture(eng.sampleRate)
-        Thread({ captureLoop(gen, r, source, eng.sampleRate) }, "voice-capture").start()
+        if (eng is tribixbite.cleverkeys.stt.gemini.GeminiSpeechEngine) {
+            val session = eng.newSession().also { activeSession = it }
+            Thread({ captureBatchSessionLoop(gen, session, source, eng.sampleRate, eng.maxSegmentSeconds) }, "voice-capture").start()
+        } else {
+            val r = SegmentedRecognizer(eng).also { recognizer = it }
+            Thread({ captureLoop(gen, r, source, eng.sampleRate) }, "voice-capture").start()
+        }
+    }
+
+    /**
+     * Capture thread for cloud/batch engines (Gemini): records continuously into a single session
+     * without local VAD silence slicing until the user presses Stop or [maxSeconds] elapses.
+     */
+    private fun captureBatchSessionLoop(
+        gen: Int,
+        session: SpeechSession,
+        source: PcmSource,
+        sampleRate: Int,
+        maxSeconds: Int,
+    ) {
+        val buffer = FloatArray(sampleRate * READ_MAX_SECONDS)
+        val started = System.nanoTime()
+        try {
+            try {
+                source.start()
+            } catch (e: MicUnavailableException) {
+                Log.w(TAG, "Microphone unavailable: ${e.message}")
+                post(gen) { dispatch(VoiceEvent.Failed(VoiceFailure.MIC_UNAVAILABLE)) }
+                return
+            } catch (e: SecurityException) {
+                post(gen) { dispatch(VoiceEvent.Failed(VoiceFailure.PERMISSION_MISSING)) }
+                return
+            }
+            while (!stopRequested && !session.isCancelled) {
+                val n = source.read(buffer)
+                if (n < 0) {
+                    post(gen) { dispatch(VoiceEvent.Failed(VoiceFailure.MIC_UNAVAILABLE)) }
+                    return
+                }
+                if (n == 0) break
+                session.accept(buffer.copyOf(n))
+                val elapsedSec = (System.nanoTime() - started) / 1e9
+                if (elapsedSec >= maxSeconds) {
+                    Log.i(TAG, "Voice batch period reached max ${maxSeconds}s")
+                    post(gen) { if (machine.state == VoiceState.LISTENING) dispatch(VoiceEvent.Toggle) }
+                    break
+                }
+            }
+            source.close()
+            if (session.isCancelled) return
+            while (!session.isCancelled) {
+                val n = source.read(buffer)
+                if (n <= 0) break
+                session.accept(buffer.copyOf(n))
+            }
+            if (session.isCancelled) return
+            val final = session.finish()
+            Log.i(TAG, "Voice batch period finished in ${(System.nanoTime() - started) / 1_000_000} ms")
+            post(gen) { dispatch(VoiceEvent.Final(final)) }
+        } catch (e: Exception) {
+            Log.e(TAG, "Voice recognition failed: ${e.message}", e)
+            post(gen) { dispatch(VoiceEvent.Failed(VoiceFailure.ENGINE_ERROR)) }
+        } finally {
+            runCatching { source.close() }
+            session.close()
+            if (activeSession === session) activeSession = null
+        }
     }
 
     /**
@@ -418,12 +486,14 @@ class VoiceInputController(
 
     private fun abortCapture() {
         recognizer?.cancel()
+        activeSession?.cancel()
         stopRequested = true
     }
 
     private fun endPeriod() {
         generation++
         recognizer = null
+        activeSession = null
         planner = null
         host.hideListening()
         main.removeCallbacks(releaseIdleEngine)
