@@ -328,7 +328,10 @@ class VoiceInputController(
         maxSeconds: Int,
     ) {
         val buffer = FloatArray(sampleRate * READ_MAX_SECONDS)
-        val started = System.nanoTime()
+        val startedNs = System.nanoTime()
+        val startedMs = startedNs / 1_000_000L
+        val silenceAutoStop = tribixbite.cleverkeys.stt.gemini.GeminiProtocol.SilenceAutoStop(startedAtMs = startedMs)
+        val blockSamples = (sampleRate * 0.032).toInt().coerceAtLeast(1)
         try {
             try {
                 source.start()
@@ -348,7 +351,35 @@ class VoiceInputController(
                 }
                 if (n == 0) break
                 session.accept(buffer.copyOf(n))
-                val elapsedSec = (System.nanoTime() - started) / 1e9
+
+                val nowMs = System.nanoTime() / 1_000_000L
+                val chunkDurationMs = (n * 1_000L) / sampleRate
+                val chunkStartMs = (nowMs - chunkDurationMs).coerceAtLeast(startedMs)
+                var decision: tribixbite.cleverkeys.stt.gemini.GeminiProtocol.SilenceDecision? = null
+                var offset = 0
+                while (offset < n) {
+                    val len = minOf(blockSamples, n - offset)
+                    val level = tribixbite.cleverkeys.stt.gemini.GeminiProtocol.computeRmsLevel(buffer, offset, len)
+                    val blockEndMs = chunkStartMs + ((offset + len) * 1_000L) / sampleRate
+                    decision = silenceAutoStop.onLevel(level, blockEndMs.coerceAtMost(nowMs))
+                    if (decision != null) break
+                    offset += len
+                }
+                when (decision) {
+                    tribixbite.cleverkeys.stt.gemini.GeminiProtocol.SilenceDecision.STOP -> {
+                        Log.i(TAG, "Gemini auto-stop: silence after speech")
+                        post(gen) { if (machine.state == VoiceState.LISTENING) dispatch(VoiceEvent.Toggle) }
+                        break
+                    }
+                    tribixbite.cleverkeys.stt.gemini.GeminiProtocol.SilenceDecision.CANCEL -> {
+                        Log.i(TAG, "Gemini auto-cancel: no speech detected")
+                        post(gen) { if (machine.state == VoiceState.LISTENING) dispatch(VoiceEvent.Cancel) }
+                        return
+                    }
+                    null -> Unit
+                }
+
+                val elapsedSec = (System.nanoTime() - startedNs) / 1e9
                 if (elapsedSec >= maxSeconds) {
                     Log.i(TAG, "Voice batch period reached max ${maxSeconds}s")
                     post(gen) { if (machine.state == VoiceState.LISTENING) dispatch(VoiceEvent.Toggle) }
@@ -364,7 +395,7 @@ class VoiceInputController(
             }
             if (session.isCancelled) return
             val final = session.finish()
-            Log.i(TAG, "Voice batch period finished in ${(System.nanoTime() - started) / 1_000_000} ms")
+            Log.i(TAG, "Voice batch period finished in ${(System.nanoTime() - startedNs) / 1_000_000} ms")
             post(gen) { dispatch(VoiceEvent.Final(final)) }
         } catch (e: Exception) {
             Log.e(TAG, "Voice recognition failed: ${e.message}", e)

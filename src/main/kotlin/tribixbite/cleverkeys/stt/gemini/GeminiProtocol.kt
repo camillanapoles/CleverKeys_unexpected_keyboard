@@ -183,4 +183,72 @@ object GeminiProtocol {
             }
         }
     }
+
+    /**
+     * OpenLess-compatible silence auto-stop state machine (`silence_auto_stop.rs`):
+     * - 3 consecutive blocks with RMS >= 0.02f marks speech detected.
+     * - After speech is detected, 3.0s of silence triggers [SilenceDecision.STOP].
+     * - If no speech is detected within 10.0s, triggers [SilenceDecision.CANCEL].
+     */
+    enum class SilenceDecision {
+        STOP,
+        CANCEL,
+    }
+
+    class SilenceAutoStop(
+        private val startedAtMs: Long,
+        private val silenceAfterSpeechMs: Long = DEFAULT_SILENCE_AFTER_SPEECH_MS,
+        private val noSpeechCancelMs: Long = DEFAULT_NO_SPEECH_CANCEL_MS,
+        private val speechLevelThreshold: Float = SPEECH_LEVEL_THRESHOLD,
+        private val minSpeechBlocks: Int = MIN_SPEECH_BLOCKS,
+    ) {
+        private var speechDetected = false
+        private var consecutiveSpeechBlocks = 0
+        private var lastSpeechAtMs: Long? = null
+        private var decided = false
+
+        fun onLevel(level: Float, nowMs: Long): SilenceDecision? {
+            if (decided) return null
+            if (level >= speechLevelThreshold) {
+                consecutiveSpeechBlocks++
+                if (consecutiveSpeechBlocks >= minSpeechBlocks) {
+                    speechDetected = true
+                    lastSpeechAtMs = nowMs
+                }
+            } else {
+                consecutiveSpeechBlocks = 0
+            }
+            val decision = if (speechDetected) {
+                val last = lastSpeechAtMs
+                if (last != null && nowMs - last >= silenceAfterSpeechMs) SilenceDecision.STOP else null
+            } else if (nowMs - startedAtMs >= noSpeechCancelMs) {
+                SilenceDecision.CANCEL
+            } else {
+                null
+            }
+            if (decision != null) decided = true
+            return decision
+        }
+
+        companion object {
+            const val SPEECH_LEVEL_THRESHOLD = 0.02f
+            const val MIN_SPEECH_BLOCKS = 3
+            const val DEFAULT_SILENCE_AFTER_SPEECH_MS = 3_000L
+            const val DEFAULT_NO_SPEECH_CANCEL_MS = 10_000L
+        }
+    }
+
+    /** Computes RMS energy level of a PCM slice in `[-1f, 1f]`. */
+    fun computeRmsLevel(pcm: FloatArray, offset: Int = 0, length: Int = pcm.size - offset): Float {
+        if (length <= 0) return 0f
+        var sumSq = 0.0
+        val end = (offset + length).coerceAtMost(pcm.size)
+        val count = end - offset
+        if (count <= 0) return 0f
+        for (i in offset until end) {
+            val s = pcm[i].toDouble()
+            sumSq += s * s
+        }
+        return kotlin.math.sqrt(sumSq / count).toFloat()
+    }
 }

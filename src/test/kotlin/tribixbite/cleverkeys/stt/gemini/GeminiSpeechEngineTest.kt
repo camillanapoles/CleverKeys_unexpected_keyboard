@@ -115,4 +115,22 @@ class GeminiSpeechEngineTest {
         assertThat(parsed.status).isEqualTo("completed")
         assertThat(parsed.transcript).isEqualTo("Olá mundo.")
     }
+
+    @Test
+    fun silenceAutoStopStopsOnceAfterSpeechAndSilence() {
+        val detector = GeminiProtocol.SilenceAutoStop(startedAtMs = 0L, silenceAfterSpeechMs = 3_000L)
+        assertThat(detector.onLevel(0.1f, 10L)).isNull()
+        assertThat(detector.onLevel(0.1f, 20L)).isNull()
+        assertThat(detector.onLevel(0.1f, 30L)).isNull()
+        assertThat(detector.onLevel(0.0f, 2_000L)).isNull()
+        assertThat(detector.onLevel(0.0f, 3_030L)).isEqualTo(GeminiProtocol.SilenceDecision.STOP)
+        assertThat(detector.onLevel(0.0f, 10_000L)).isNull()
+    }
+
+    @Test
+    fun silenceAutoStopCancelsAfterTenSecondsWithoutSpeech() {
+        val detector = GeminiProtocol.SilenceAutoStop(startedAtMs = 1_000L)
+        assertThat(detector.onLevel(0.005f, 10_999L)).isNull()
+        assertThat(detector.onLevel(0.005f, 11_000L)).isEqualTo(GeminiProtocol.SilenceDecision.CANCEL)
+    }
 }
