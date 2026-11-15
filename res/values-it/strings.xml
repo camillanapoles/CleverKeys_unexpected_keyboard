@@ -2806,4 +2806,6 @@
     <string name="voice_pack_error_sample_rate">Il pacchetto vocale registra a %1$d Hz; è supportato solo 16000 Hz.</string>
     <string name="voice_pack_error_needs_newer_app">Questo pacchetto vocale richiede una versione più recente di CleverKeys.</string>
     <string name="voice_pack_error_too_many_entries">Il pacchetto vocale contiene più di %1$d file.</string>
+    <string name="cmd_gemini_transcribe">Gemini Transcribe (API)</string>
+    <string name="cmd_gemini_transcribe_desc">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
 </resources>

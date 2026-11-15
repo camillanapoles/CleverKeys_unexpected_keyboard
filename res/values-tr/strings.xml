@@ -2732,4 +2732,6 @@
     <string name="voice_pack_error_sample_rate">Ses paketi %1$d Hz ile kayıt yapıyor; yalnızca 16000 Hz desteklenir.</string>
     <string name="voice_pack_error_needs_newer_app">Bu ses paketi CleverKeys\'in daha yeni bir sürümünü gerektiriyor.</string>
     <string name="voice_pack_error_too_many_entries">Ses paketi %1$d dosyadan fazlasını içeriyor.</string>
+    <string name="cmd_gemini_transcribe">Gemini Transcribe (API)</string>
+    <string name="cmd_gemini_transcribe_desc">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
 </resources>

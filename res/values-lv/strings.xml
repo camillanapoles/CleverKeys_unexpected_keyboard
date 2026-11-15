@@ -2777,4 +2777,6 @@
     <string name="voice_pack_error_sample_rate">Balss pakotne ieraksta ar %1$d Hz; tiek atbalstīts tikai 16000 Hz.</string>
     <string name="voice_pack_error_needs_newer_app">Šai balss pakotnei nepieciešama jaunāka CleverKeys versija.</string>
     <string name="voice_pack_error_too_many_entries">Balss pakotnē ir vairāk nekā %1$d failu.</string>
+    <string name="cmd_gemini_transcribe">Gemini Transcribe (API)</string>
+    <string name="cmd_gemini_transcribe_desc">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
 </resources>

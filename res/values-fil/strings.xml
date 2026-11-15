@@ -2733,4 +2733,6 @@
     <string name="voice_pack_error_sample_rate">Nagre-record ang voice pack sa %1$d Hz; 16000 Hz lang ang sinusuportahan.</string>
     <string name="voice_pack_error_needs_newer_app">Kailangan ng voice pack na ito ng mas bagong bersyon ng CleverKeys.</string>
     <string name="voice_pack_error_too_many_entries">Naglalaman ang voice pack ng higit sa %1$d file.</string>
+    <string name="cmd_gemini_transcribe">Gemini Transcribe (API)</string>
+    <string name="cmd_gemini_transcribe_desc">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
 </resources>

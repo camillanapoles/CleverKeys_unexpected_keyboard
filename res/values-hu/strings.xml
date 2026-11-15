@@ -2727,4 +2727,6 @@
     <string name="voice_pack_error_sample_rate">A hangcsomag %1$d Hz-en rögzít; csak a 16000 Hz támogatott.</string>
     <string name="voice_pack_error_needs_newer_app">Ez a hangcsomag a CleverKeys újabb verzióját igényli.</string>
     <string name="voice_pack_error_too_many_entries">A hangcsomag több mint %1$d fájlt tartalmaz.</string>
+    <string name="cmd_gemini_transcribe">Gemini Transcribe (API)</string>
+    <string name="cmd_gemini_transcribe_desc">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
 </resources>

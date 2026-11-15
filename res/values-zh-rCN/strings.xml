@@ -2674,4 +2674,6 @@
     <string name="voice_pack_error_sample_rate">该语音包的采样率为 %1$d Hz；仅支持 16000 Hz。</string>
     <string name="voice_pack_error_needs_newer_app">此语音包需要更新版本的 CleverKeys。</string>
     <string name="voice_pack_error_too_many_entries">语音包包含的文件超过 %1$d 个。</string>
+    <string name="cmd_gemini_transcribe">Gemini Transcribe (API)</string>
+    <string name="cmd_gemini_transcribe_desc">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
 </resources>

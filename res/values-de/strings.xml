@@ -2741,4 +2741,6 @@
     <string name="voice_pack_error_sample_rate">Das Spracheingabe-Paket nimmt mit %1$d Hz auf; nur 16000 Hz werden unterstützt.</string>
     <string name="voice_pack_error_needs_newer_app">Dieses Spracheingabe-Paket erfordert eine neuere Version von CleverKeys.</string>
     <string name="voice_pack_error_too_many_entries">Das Spracheingabe-Paket enthält mehr als %1$d Dateien.</string>
+    <string name="cmd_gemini_transcribe">Gemini Transcribe (API)</string>
+    <string name="cmd_gemini_transcribe_desc">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
 </resources>

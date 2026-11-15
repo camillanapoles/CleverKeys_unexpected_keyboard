@@ -2704,4 +2704,6 @@
     <string name="voice_pack_error_sample_rate">Gói giọng nói ghi âm ở %1$d Hz; chỉ hỗ trợ 16000 Hz.</string>
     <string name="voice_pack_error_needs_newer_app">Gói giọng nói này cần phiên bản CleverKeys mới hơn.</string>
     <string name="voice_pack_error_too_many_entries">Gói giọng nói chứa hơn %1$d tệp.</string>
+    <string name="cmd_gemini_transcribe">Gemini Transcribe (API)</string>
+    <string name="cmd_gemini_transcribe_desc">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
 </resources>

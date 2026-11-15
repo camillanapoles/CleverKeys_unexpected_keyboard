@@ -2816,4 +2816,6 @@
     <string name="voice_pack_error_sample_rate">Голосовой пакет записывает с частотой %1$d Гц; поддерживается только 16000 Гц.</string>
     <string name="voice_pack_error_needs_newer_app">Этому голосовому пакету нужна более новая версия CleverKeys.</string>
     <string name="voice_pack_error_too_many_entries">Голосовой пакет содержит более %1$d файлов.</string>
+    <string name="cmd_gemini_transcribe">Gemini Transcribe (API)</string>
+    <string name="cmd_gemini_transcribe_desc">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
 </resources>

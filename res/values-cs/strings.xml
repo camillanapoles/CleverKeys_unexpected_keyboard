@@ -2811,4 +2811,6 @@
     <string name="voice_pack_error_sample_rate">Hlasový balíček nahrává se vzorkovací frekvencí %1$d Hz; podporována je jen 16000 Hz.</string>
     <string name="voice_pack_error_needs_newer_app">Tento hlasový balíček vyžaduje novější verzi CleverKeys.</string>
     <string name="voice_pack_error_too_many_entries">Hlasový balíček obsahuje více než %1$d souborů.</string>
+    <string name="cmd_gemini_transcribe">Gemini Transcribe (API)</string>
+    <string name="cmd_gemini_transcribe_desc">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
 </resources>

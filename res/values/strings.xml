@@ -3171,7 +3171,7 @@
     <string name="voice_gemini_prompt_label" translatable="false">Transcription prompt</string>
     <string name="voice_gemini_show_key" translatable="false">Show</string>
     <string name="voice_gemini_hide_key" translatable="false">Hide</string>
-    <string name="cmd_gemini_transcribe" translatable="false">Gemini Transcribe (API)</string>
-    <string name="cmd_gemini_transcribe_desc" translatable="false">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
+    <string name="cmd_gemini_transcribe">Gemini Transcribe (API)</string>
+    <string name="cmd_gemini_transcribe_desc">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
     <string name="voice_msg_need_gemini" translatable="false">Enable Gemini API and set your local API key in Voice settings.</string>
 </resources>
