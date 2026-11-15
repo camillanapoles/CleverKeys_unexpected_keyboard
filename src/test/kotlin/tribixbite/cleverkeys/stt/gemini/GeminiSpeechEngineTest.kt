@@ -119,18 +119,18 @@ class GeminiSpeechEngineTest {
     @Test
     fun silenceAutoStopStopsOnceAfterSpeechAndSilence() {
         val detector = GeminiProtocol.SilenceAutoStop(startedAtMs = 0L, silenceAfterSpeechMs = 3_000L)
-        assertThat(detector.onLevel(0.01f, 10L)).isNull()
-        assertThat(detector.onLevel(0.01f, 20L)).isNull()
-        assertThat(detector.onLevel(0.01f, 30L)).isNull()
-        assertThat(detector.onLevel(0.001f, 2_000L)).isNull()
-        assertThat(detector.onLevel(0.001f, 3_030L)).isEqualTo(GeminiProtocol.SilenceDecision.STOP)
-        assertThat(detector.onLevel(0.001f, 10_000L)).isNull()
+        assertThat(detector.onLevel(0.003f, 10L)).isNull()
+        assertThat(detector.onLevel(0.003f, 20L)).isNull()
+        assertThat(detector.onLevel(0.003f, 30L)).isNull()
+        assertThat(detector.onLevel(0.0005f, 2_000L)).isNull()
+        assertThat(detector.onLevel(0.0005f, 3_030L)).isEqualTo(GeminiProtocol.SilenceDecision.STOP)
+        assertThat(detector.onLevel(0.0005f, 10_000L)).isNull()
     }
 
     @Test
     fun silenceAutoStopCancelsAfterTenSecondsWithoutSpeech() {
         val detector = GeminiProtocol.SilenceAutoStop(startedAtMs = 1_000L)
-        assertThat(detector.onLevel(0.001f, 10_999L)).isNull()
-        assertThat(detector.onLevel(0.001f, 11_000L)).isEqualTo(GeminiProtocol.SilenceDecision.CANCEL)
+        assertThat(detector.onLevel(0.0005f, 10_999L)).isNull()
+        assertThat(detector.onLevel(0.0005f, 11_000L)).isEqualTo(GeminiProtocol.SilenceDecision.CANCEL)
     }
 }
