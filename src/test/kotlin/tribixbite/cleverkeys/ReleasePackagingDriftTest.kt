@@ -232,6 +232,8 @@ class ReleasePackagingDriftTest {
                 // requested ONLY when the user turns voice input on or imports a voice pack
                 // (stt.MicPermissionGate, MicPermissionGateTest). Audio never leaves the device.
                 "android.permission.RECORD_AUDIO",
+                // Opt-in Gemini Voice STT (fork feature).
+                "android.permission.INTERNET",
             )
         // The debug overlay merges into the debug APK; assert it adds none either, so an
         // instrumented-test convenience cannot become a shipped permission.

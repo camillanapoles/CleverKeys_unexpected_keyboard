@@ -3162,13 +3162,13 @@
     <string name="voice_pack_error_sample_rate">The voice pack records at %1$d Hz; only 16000 Hz is supported.</string>
     <string name="voice_pack_error_needs_newer_app">This voice pack needs a newer version of CleverKeys.</string>
     <string name="voice_pack_error_too_many_entries">The voice pack contains more than %1$d files.</string>
-    <string name="voice_gemini_enable_title">Use Gemini API for voice input</string>
-    <string name="voice_gemini_enable_desc">Capture audio directly in the keyboard, transcribe via Gemini, and commit text directly to the active field.</string>
-    <string name="voice_gemini_api_key_label">Gemini API key (local only)</string>
-    <string name="voice_gemini_api_key_hint">AIza…</string>
-    <string name="voice_gemini_api_key_local_note">Stored locally on this device only and never included in settings exports or backups.</string>
-    <string name="voice_gemini_model_label">Gemini model</string>
-    <string name="voice_gemini_prompt_label">Transcription prompt</string>
-    <string name="voice_gemini_show_key">Show</string>
-    <string name="voice_gemini_hide_key">Hide</string>
+    <string name="voice_gemini_enable_title" translatable="false">Use Gemini API for voice input</string>
+    <string name="voice_gemini_enable_desc" translatable="false">Capture audio directly in the keyboard, transcribe via Gemini, and commit text directly to the active field.</string>
+    <string name="voice_gemini_api_key_label" translatable="false">Gemini API key (local only)</string>
+    <string name="voice_gemini_api_key_hint" translatable="false">AIza…</string>
+    <string name="voice_gemini_api_key_local_note" translatable="false">Stored locally on this device only and never included in settings exports or backups.</string>
+    <string name="voice_gemini_model_label" translatable="false">Gemini model</string>
+    <string name="voice_gemini_prompt_label" translatable="false">Transcription prompt</string>
+    <string name="voice_gemini_show_key" translatable="false">Show</string>
+    <string name="voice_gemini_hide_key" translatable="false">Hide</string>
 </resources>

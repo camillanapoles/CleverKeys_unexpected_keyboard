@@ -385,6 +385,10 @@ class SettingsImportPlanBuilderTest {
             // again" state; a restore elsewhere must not turn voice input on.
             "voice_input_enabled",
             "voice_mic_permission_blocked",
+            "voice_gemini_enabled",
+            "voice_gemini_api_key",
+            "voice_gemini_model",
+            "voice_gemini_prompt",
         )
         assertThat(SettingsValidation.INTERNAL_KEYS).isEqualTo(expected)
     }
