@@ -628,6 +628,9 @@ class KeyboardReceiver(
             // On-device voice input (docs/specs/voice-input.md): start/stop listening.
             KeyValue.Event.VOICE_INPUT -> keyboard2.onVoiceInputKey()
 
+            // Dedicated Gemini API transcription key.
+            KeyValue.Event.GEMINI_TRANSCRIBE -> keyboard2.onGeminiTranscribeKey()
+
             KeyValue.Event.SWITCH_VOICE_TYPING_CHOOSER -> VoiceImeSwitcher.onVoiceChooserKey(
                 keyboard2, subtypeManager.inputMethodManager, Config.globalPrefs(), builtInVoice()
             )

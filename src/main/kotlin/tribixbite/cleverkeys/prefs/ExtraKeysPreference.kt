@@ -64,6 +64,7 @@ class ExtraKeysPreference(context: Context, attrs: AttributeSet?) : PreferenceCa
             "compose",
             "voice_typing",
             "voice_input", // 2026-10-29: on-device dictation (opt-in voice pack)
+            "gemini_transcribe", // Dedicated Gemini API voice transcription key
             "theme_next", // 2026-11-11: next / previous theme in Theme Manager's order
             "theme_previous",
             "toggle_scene_motion", // 2026-11-11: Animated scenes on / off
@@ -198,7 +199,7 @@ class ExtraKeysPreference(context: Context, attrs: AttributeSet?) : PreferenceCa
         internal fun categorizedKeys(keys: List<String>): Map<Int, List<String>> =
             mapOf(
                 R.string.extra_keys_group_layout_switching to keys.filter { it in listOf("switch_forward", "switch_backward", "switch_greekmath") },
-                R.string.extra_keys_group_system to keys.filter { it in listOf("alt", "meta", "compose", "voice_typing", "voice_input", "theme_next", "theme_previous", "toggle_scene_motion", "toggle_true_black", "switch_clipboard", "change_method", "capslock", "autofill") },
+                R.string.extra_keys_group_system to keys.filter { it in listOf("alt", "meta", "compose", "voice_typing", "voice_input", "gemini_transcribe", "theme_next", "theme_previous", "toggle_scene_motion", "toggle_true_black", "switch_clipboard", "change_method", "capslock", "autofill") },
                 R.string.extra_keys_group_navigation to keys.filter { it in listOf("tab", "esc", "page_up", "page_down", "home", "end", "word_left", "word_right") },
                 R.string.extra_keys_group_editing to keys.filter { it.startsWith("copy") || it.startsWith("paste") || it.startsWith("cut") || it.startsWith("selectAll") || it.startsWith("undo") || it.startsWith("redo") || it.contains("delete_word") || it == "shareText" || it == "clear_clipboard" || it.startsWith("append_") || it in EDITOR_SELECTION_KEYS },
                 R.string.extra_keys_group_formatting to keys.filter { it in listOf("superscript", "subscript") },
@@ -292,6 +293,7 @@ class ExtraKeysPreference(context: Context, attrs: AttributeSet?) : PreferenceCa
                 "undo" -> id = R.string.key_descr_undo
                 "voice_typing" -> id = R.string.key_descr_voice_typing
                 "voice_input" -> id = R.string.cmd_voice_input_desc
+                "gemini_transcribe" -> id = R.string.cmd_gemini_transcribe_desc
                 "theme_next" -> id = R.string.cmd_theme_next_desc
                 "theme_previous" -> id = R.string.cmd_theme_previous_desc
                 "toggle_scene_motion" -> id = R.string.cmd_toggle_scene_motion_desc
@@ -375,6 +377,7 @@ class ExtraKeysPreference(context: Context, attrs: AttributeSet?) : PreferenceCa
             "compose" to R.string.key_descr_compose,
             "voice_typing" to R.string.extra_key_title_voice,
             "voice_input" to R.string.cmd_voice_input,
+            "gemini_transcribe" to R.string.cmd_gemini_transcribe,
             "theme_next" to R.string.cmd_theme_next,
             "theme_previous" to R.string.cmd_theme_previous,
             "toggle_scene_motion" to R.string.cmd_toggle_scene_motion,

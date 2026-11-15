@@ -2551,7 +2551,7 @@ class Keyboard2View @JvmOverloads constructor(
             hasSwipe = true
             if (sub.getKind() == KeyValue.Kind.Event) when (sub.getEvent()) {
                 KeyValue.Event.SWITCH_VOICE_TYPING, KeyValue.Event.SWITCH_VOICE_TYPING_CHOOSER,
-                KeyValue.Event.VOICE_INPUT -> hasVoice = true
+                KeyValue.Event.VOICE_INPUT, KeyValue.Event.GEMINI_TRANSCRIBE -> hasVoice = true
                 else -> Unit
             }
         }

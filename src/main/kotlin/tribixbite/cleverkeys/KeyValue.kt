@@ -58,6 +58,8 @@ class KeyValue private constructor(
         TOGGLE_SCENE_MOTION,
         // 2026-11-12: turn True Black Scenes (`look_scene_true_black`) on or off. Appended (ordinal).
         TOGGLE_TRUE_BLACK,
+        // Dedicated Gemini API voice transcription key (gemini_transcribe). Appended (ordinal).
+        GEMINI_TRANSCRIBE,
     }
 
     /**
@@ -684,6 +686,8 @@ class KeyValue private constructor(
             "voice_typing_chooser" -> eventKey(0xE015, Event.SWITCH_VOICE_TYPING_CHOOSER, FLAG_SMALLER_FONT)
             // On-device dictation with an imported voice pack (same microphone glyph).
             "voice_input" -> eventKey(0xE015, Event.VOICE_INPUT, FLAG_SMALLER_FONT)
+            // Dedicated Gemini API voice transcription key.
+            "gemini_transcribe" -> eventKey(0xE015, Event.GEMINI_TRANSCRIBE, FLAG_SMALLER_FONT)
             "switch_gif" -> eventKey("GIF", Event.SWITCH_GIF, FLAG_SMALLER_FONT)
             // gh #175: collapse the keyboard to a thin bar / a floating button.
             "minimize_bar" -> eventKey("▁", Event.MINIMIZE_BAR, 0)

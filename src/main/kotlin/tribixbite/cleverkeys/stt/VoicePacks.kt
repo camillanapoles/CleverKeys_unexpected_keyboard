@@ -100,7 +100,7 @@ object VoicePacks {
     /** The gate's facts for [context] right now. */
     fun facts(context: Context, prefs: SharedPreferences, fieldRefused: Boolean = false): MicPermissionGate.Facts =
         MicPermissionGate.Facts(
-            voiceEnabled = isEnabled(prefs),
+            voiceEnabled = isEnabled(prefs) || isGeminiReady(prefs),
             packInstalled = isGeminiReady(prefs) || manager(context).installedPacks().isNotEmpty(),
             permissionGranted = hasMicPermission(context),
             permissionBlocked = isPermissionBlocked(prefs),

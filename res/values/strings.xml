@@ -3163,7 +3163,7 @@
     <string name="voice_pack_error_needs_newer_app">This voice pack needs a newer version of CleverKeys.</string>
     <string name="voice_pack_error_too_many_entries">The voice pack contains more than %1$d files.</string>
     <string name="voice_gemini_enable_title" translatable="false">Use Gemini API for voice input</string>
-    <string name="voice_gemini_enable_desc" translatable="false">Capture audio directly in the keyboard, transcribe via Gemini, and commit text directly to the active field.</string>
+    <string name="voice_gemini_enable_desc" translatable="false">Independent from the offline voice pack switch. Captures audio, transcribes via Gemini (e.g. gemini-3.5-transcribe), and commits text directly via gemini_transcribe or voice_input.</string>
     <string name="voice_gemini_api_key_label" translatable="false">Gemini API key (local only)</string>
     <string name="voice_gemini_api_key_hint" translatable="false">AIza…</string>
     <string name="voice_gemini_api_key_local_note" translatable="false">Stored locally on this device only and never included in settings exports or backups.</string>
@@ -3171,4 +3171,7 @@
     <string name="voice_gemini_prompt_label" translatable="false">Transcription prompt</string>
     <string name="voice_gemini_show_key" translatable="false">Show</string>
     <string name="voice_gemini_hide_key" translatable="false">Hide</string>
+    <string name="cmd_gemini_transcribe" translatable="false">Gemini Transcribe (API)</string>
+    <string name="cmd_gemini_transcribe_desc" translatable="false">Record audio and transcribe directly into the active field using your local Gemini API key.</string>
+    <string name="voice_msg_need_gemini" translatable="false">Enable Gemini API and set your local API key in Voice settings.</string>
 </resources>

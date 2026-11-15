@@ -115,10 +115,18 @@ class VoiceInputController(
 
     val state: VoiceState get() = machine.state
 
-    /** The voice_input key / command. */
-    fun onKeyPressed() {
+    @Volatile
+    private var preferGemini: Boolean = false
+
+    /** The voice_input / gemini_transcribe key / command. */
+    fun onKeyPressed(requireGemini: Boolean = false) {
         if (machine.isActive) {
             dispatch(VoiceEvent.Toggle)
+            return
+        }
+        preferGemini = requireGemini
+        if (requireGemini && !VoicePacks.isGeminiReady(host.prefs)) {
+            explainThenOpen(MicPermissionGate.Decision.NEED_PACK, R.string.voice_msg_need_gemini, host::openVoiceSettings)
             return
         }
         val fieldKind = host.fieldKind()
@@ -268,6 +276,7 @@ class VoiceInputController(
             Log.i(TAG, "Voice engine ready: ${engine?.memoryReport()}")
             return
         }
+        if (preferGemini) throw NoPackException()
         val pack = packs().activePack(language) ?: throw NoPackException()
         if (engine != null && enginePack == pack.dir) return
         releaseEngine()
@@ -350,7 +359,7 @@ class VoiceInputController(
             Log.i(TAG, "Voice period: ${r.segmentsFinished + 1} segment(s), ${(System.nanoTime() - started) / 1_000_000} ms")
             post(gen) { dispatch(VoiceEvent.Final(final)) }
         } catch (e: Exception) {
-            Log.e(TAG, "Voice recognition failed", e)
+            Log.e(TAG, "Voice recognition failed: ${e.message}", e)
             post(gen) { dispatch(VoiceEvent.Failed(VoiceFailure.ENGINE_ERROR)) }
         } finally {
             runCatching { source.close() }

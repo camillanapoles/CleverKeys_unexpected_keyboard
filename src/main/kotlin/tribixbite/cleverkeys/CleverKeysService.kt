@@ -1467,7 +1467,16 @@ class CleverKeysService : InputMethodService(),
 
     /** The voice_input key / command (KeyboardReceiver → here). */
     fun onVoiceInputKey() {
-        val controller = _voiceInput ?: tribixbite.cleverkeys.stt.VoiceInputController(
+        ensureVoiceInputController().onKeyPressed(requireGemini = false)
+    }
+
+    /** The gemini_transcribe key / command (KeyboardReceiver → here). */
+    fun onGeminiTranscribeKey() {
+        ensureVoiceInputController().onKeyPressed(requireGemini = true)
+    }
+
+    private fun ensureVoiceInputController(): tribixbite.cleverkeys.stt.VoiceInputController {
+        return _voiceInput ?: tribixbite.cleverkeys.stt.VoiceInputController(
             VoiceInputBridge(
                 context = this,
                 prefsProvider = { DirectBootAwarePreferences.get_shared_preferences(this) },
@@ -1484,7 +1493,6 @@ class CleverKeysService : InputMethodService(),
                 },
             )
         ).also { _voiceInput = it }
-        controller.onKeyPressed()
     }
 
     // Todo 13c (2026-10-28): the private calculateDynamicKeyboardHeight /
