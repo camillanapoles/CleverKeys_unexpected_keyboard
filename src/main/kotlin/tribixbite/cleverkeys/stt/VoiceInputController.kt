@@ -332,6 +332,7 @@ class VoiceInputController(
         val startedMs = startedNs / 1_000_000L
         val silenceAutoStop = tribixbite.cleverkeys.stt.gemini.GeminiProtocol.SilenceAutoStop(startedAtMs = startedMs)
         val blockSamples = (sampleRate * 0.032).toInt().coerceAtLeast(1)
+        var maxRms = 0f
         try {
             try {
                 source.start()
@@ -360,6 +361,7 @@ class VoiceInputController(
                 while (offset < n) {
                     val len = minOf(blockSamples, n - offset)
                     val level = tribixbite.cleverkeys.stt.gemini.GeminiProtocol.computeRmsLevel(buffer, offset, len)
+                    if (level > maxRms) maxRms = level
                     val blockEndMs = chunkStartMs + ((offset + len) * 1_000L) / sampleRate
                     decision = silenceAutoStop.onLevel(level, blockEndMs.coerceAtMost(nowMs))
                     if (decision != null) break
@@ -367,12 +369,12 @@ class VoiceInputController(
                 }
                 when (decision) {
                     tribixbite.cleverkeys.stt.gemini.GeminiProtocol.SilenceDecision.STOP -> {
-                        Log.i(TAG, "Gemini auto-stop: silence after speech")
+                        Log.i(TAG, "Gemini auto-stop: silence after speech (maxRms=$maxRms)")
                         post(gen) { if (machine.state == VoiceState.LISTENING) dispatch(VoiceEvent.Toggle) }
                         break
                     }
                     tribixbite.cleverkeys.stt.gemini.GeminiProtocol.SilenceDecision.CANCEL -> {
-                        Log.i(TAG, "Gemini auto-cancel: no speech detected")
+                        Log.i(TAG, "Gemini auto-cancel: no speech detected (maxRms=$maxRms)")
                         post(gen) { if (machine.state == VoiceState.LISTENING) dispatch(VoiceEvent.Cancel) }
                         return
                     }

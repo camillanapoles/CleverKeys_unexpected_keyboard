@@ -231,7 +231,7 @@ object GeminiProtocol {
         }
 
         companion object {
-            const val SPEECH_LEVEL_THRESHOLD = 0.02f
+            const val SPEECH_LEVEL_THRESHOLD = 0.005f
             const val MIN_SPEECH_BLOCKS = 3
             const val DEFAULT_SILENCE_AFTER_SPEECH_MS = 3_000L
             const val DEFAULT_NO_SPEECH_CANCEL_MS = 10_000L
